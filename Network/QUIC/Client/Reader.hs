@@ -30,6 +30,8 @@ import Network.QUIC.Types
 -- | readerClient dies when the socket is closed.
 readerClient :: Socket -> Connection -> IO ()
 readerClient s0 conn = handleLogUnit logAction $ do
+    putStrLn "XXXXX"
+    getServerAddr conn >>= print
     getServerAddr conn >>= loop
   where
     loop msa0 = do
@@ -39,6 +41,10 @@ readerClient s0 conn = handleLogUnit logAction $ do
               Nothing  ->     NSB.recv     s0 maximumUdpPayloadSize
               Just sa0 -> do
                   (bs, sa) <- NSB.recvFrom s0 maximumUdpPayloadSize
+                  when (sa /= sa0) $ do
+                      putStrLn "YYYYY"
+                      print sa
+                      print sa0
                   return $ if sa == sa0 then bs else ""
         case mbs of
           Nothing -> close s0
