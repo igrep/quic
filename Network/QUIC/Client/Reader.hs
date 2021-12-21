@@ -39,8 +39,8 @@ readerClient s0 conn = handleLogUnit logAction $
               Nothing  ->     NSB.recv     s0 maximumUdpPayloadSize
               Just sa0 -> do
                   putStrLn "XXXXX"
-                  (getSocketName s0 >>= print) `E.catchAny` \_ -> putStrLn "getSocketName"
-                  (getPeerName s0 >>= print) `E.catchAny` \_ -> putStrLn "getPeerName"
+                  (getSocketName s0 >>= print) `E.catchAny` \e -> print e
+                  (getPeerName s0 >>= print) `E.catchAny` \e -> print e
                   putStrLn "recvFrom..."
                   (bs, sa) <- NSB.recvFrom s0 maximumUdpPayloadSize
                   putStrLn "recvFrom...done"
