@@ -11,7 +11,7 @@ module Network.QUIC.Client.Reader (
 import Control.Concurrent
 import qualified Data.ByteString as BS
 import Data.List (intersect)
-import Network.Socket (Socket, getPeerName, close)
+import Network.Socket (Socket, getPeerName, close, getSocketName)
 import qualified Network.Socket.ByteString as NSB
 import qualified UnliftIO.Exception as E
 
@@ -29,9 +29,7 @@ import Network.QUIC.Types
 
 -- | readerClient dies when the socket is closed.
 readerClient :: Socket -> Connection -> IO ()
-readerClient s0 conn = handleLogUnit logAction $ do
-    putStrLn "XXXXX"
-    getServerAddr conn >>= print
+readerClient s0 conn = handleLogUnit logAction $
     getServerAddr conn >>= loop
   where
     loop msa0 = do
@@ -40,7 +38,12 @@ readerClient s0 conn = handleLogUnit logAction $ do
             case msa0 of
               Nothing  ->     NSB.recv     s0 maximumUdpPayloadSize
               Just sa0 -> do
+                  putStrLn "XXXXX"
+                  getSocketName s0 >>= print
+                  getPeerName s0 >>= print
+                  putStrLn "recvFrom..."
                   (bs, sa) <- NSB.recvFrom s0 maximumUdpPayloadSize
+                  putStrLn "recvFrom...done"
                   when (sa /= sa0) $ do
                       putStrLn "YYYYY"
                       print sa
