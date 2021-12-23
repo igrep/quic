@@ -25,27 +25,39 @@ import Network.QUIC.Server.Reader (runNewServerReader)
 import Network.QUIC.Stream
 import Network.QUIC.Types
 
-receiver :: Connection -> IO ()
+import           GHC.Stack
+
+receiver :: HasCallStack => Connection -> IO ()
 receiver conn = handleLogT logAction body
   where
+    puts = printAsRole conn
     body = do
+        puts "BEFORE loopHandshake"
         loopHandshake
+        puts "BEFORE loopEstablished"
         loopEstablished
+        puts "AFTER loopEstablished"
     recvTimeout = do
         -- The spec says that CC is not sent when timeout.
         -- But we intentionally sends CC when timeout.
         ito <- readMinIdleTimeout conn
+        puts $ "IN recvTimeout: BEFORE timeout: " ++ show ito
         mx <- timeout ito $ connRecv conn -- fixme: taking minimum with peer's one
+        puts $ "IN recvTimeout: AFTER timeout: " ++ show ito
         case mx of
           Nothing -> E.throwIO ConnectionIsTimeout
           Just x  -> return x
     loopHandshake = do
+        puts "IN loopHandshake: BEFORE recvTimeout"
         rpkt <- recvTimeout
+        puts "IN loopHandshake: AFTER recvTimeout"
         processReceivedPacketHandshake conn rpkt
         established <- isConnectionEstablished conn
         unless established loopHandshake
     loopEstablished = forever $ do
+        puts "IN loopEstablished: BEFORE recvTimeout"
         rpkt <- recvTimeout
+        puts "IN loopEstablished: AFTER recvTimeout"
         let CryptPacket hdr _ = rpCryptPacket rpkt
             cid = headerMyCID hdr
         included <- myCIDsInclude conn cid

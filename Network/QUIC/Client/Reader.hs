@@ -59,9 +59,10 @@ readerClient s0 conn = handleLogUnit logAction $ do
             mapM_ (putQ now bytes) pkts
             loop msa0
     logAction msg = connDebugLog conn ("debug: readerClient: " <> msg)
-    putQ _ _ (PacketIB BrokenPacket) = return ()
+    putQ _ _ (PacketIB BrokenPacket) = putStrLn "readerClient: PacketIB" >> return ()
     putQ t _ (PacketIV pkt@(VersionNegotiationPacket dCID sCID peerVers)) = do
         qlogReceived conn pkt t
+        putStrLn "readerClient: PacketIV"
         myVerInfo <- getVersionInfo conn
         let myVer   = chosenVersion myVerInfo
             myVers0 = otherVersions myVerInfo
@@ -73,9 +74,10 @@ readerClient s0 conn = handleLogUnit logAction $ do
                   vers@(ver:_) | ok -> VersionInfo ver vers
                   _                 -> brokenVersionInfo
             E.throwTo (mainThreadId conn) $ VerNego nextVerInfo
-    putQ t z (PacketIC pkt lvl) = writeRecvQ (connRecvQ conn) $ mkReceivedPacket pkt t z lvl
+    putQ t z (PacketIC pkt lvl) = putStrLn "readerClient: PacketIC" >> (writeRecvQ (connRecvQ conn) $ mkReceivedPacket pkt t z lvl)
     putQ t _ (PacketIR pkt@(RetryPacket ver dCID sCID token ex)) = do
         qlogReceived conn pkt t
+        putStrLn "readerClient: PacketIR"
         ok <- checkCIDs conn dCID ex
         when ok $ do
             resetPeerCID conn sCID

@@ -36,6 +36,8 @@ import Network.QUIC.Imports
 import Network.QUIC.Recovery
 import Network.QUIC.Stream
 
+import           Data.IORef (readIORef)
+
 ----------------------------------------------------------------
 
 setConnectionState :: Connection -> ConnectionState -> IO ()
@@ -77,9 +79,12 @@ wait1RTTReady Connection{..} = atomically $ do
 -- | For clients, waiting until HANDSHAKE_DONE is received.
 --   For servers, waiting until a TLS stack reports that the handshake is complete.
 waitEstablished :: Connection -> IO ()
-waitEstablished Connection{..} = atomically $ do
+waitEstablished Connection{..} = (printSock >>) . atomically $ do
     cs <- readTVar $ connectionState connState
     check (cs >= Established)
+  where
+    printSock =
+        traverse_ (\s -> putStrLn ("In waitEstablished " ++ show s)) =<< readIORef sockets
 
 ----------------------------------------------------------------
 

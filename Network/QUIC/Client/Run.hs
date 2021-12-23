@@ -60,11 +60,15 @@ runClient conf client0 isICVN verInfo = do
         setIncompatibleVN conn isICVN -- must be before handshaker
         handshaker <- handshakeClient conf' conn myAuthCIDs
         let client = do
-                if ccUse0RTT conf then
+                if ccUse0RTT conf then do
+                    putStrLn "Before wait0RTTReady"
                     wait0RTTReady conn
-                  else
+                  else do
+                    putStrLn "Before wait1RTTReady"
                     wait1RTTReady conn
+                putStrLn "After wait0RTTReady/wait1RTTReady"
                 setToken conn $ resumptionToken $ ccResumption conf
+                putStrLn "After setToken"
                 client0 conn
             ldcc = connLDCC conn
             supporters = foldr1 concurrently_ [handshaker
@@ -100,6 +104,7 @@ createClientConnection conf@ClientConfig{..} verInfo = do
     sref <- newIORef [s0]
     let send buf siz = do
             s:_ <- readIORef sref
+            printBuf "Client is sending: " buf siz
             if ccAutoMigration then
                 void $ NS.sendBufTo s buf siz sa0
               else

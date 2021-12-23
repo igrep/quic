@@ -27,6 +27,8 @@ import Network.QUIC.Recovery.Utils
 import Network.QUIC.Recovery.Constants
 import Network.QUIC.Types
 
+import           GHC.Stack
+
 ----------------------------------------------------------------
 
 noInFlightPacket :: LDCC -> EncryptionLevel -> IO Bool
@@ -125,7 +127,7 @@ updateWithNext ldcc@LDCC{..} = do
       Empty    -> return ()
       Next tmi -> updateLossDetectionTimer' ldcc tmi
 
-updateLossDetectionTimer' :: LDCC -> TimerInfo -> IO ()
+updateLossDetectionTimer' :: HasCallStack => LDCC -> TimerInfo -> IO ()
 updateLossDetectionTimer' ldcc@LDCC{..} tmi = do
     atomically $ writeTVar timerInfoQ Empty
     let tim = timerTime tmi

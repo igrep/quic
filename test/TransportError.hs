@@ -25,7 +25,9 @@ runC cc ms body = timeout us $ run cc body'
   where
     us = ms * 1000
     body' conn = do
+        putStrLn "Before waitEstablished"
         waitEstablished conn
+        putStrLn "After waitEstablished"
         threadDelay 100000
         body conn
 
@@ -134,7 +136,7 @@ transportErrorSpec cc0 ms = do
             let cc = addHook cc0 $ setOnTLSHandshakeCreated cryptoEndOfEarlyData
             runCnoOp cc ms `shouldThrow` cryptoErrorsIn [TLS.UnexpectedMessage]
         it "MUST send PROTOCOL_VIOLATION if CRYPTO in 0-RTT is received [TLS 8.3]" $ \_ -> do
-            mres <- runC cc0 ms getResumptionInfo
+            mres <- runC cc0 ms (\c -> putStrLn "Before getResumptionInfo" >> getResumptionInfo c)
             case mres of
               Just res
                 | is0RTTPossible res -> do

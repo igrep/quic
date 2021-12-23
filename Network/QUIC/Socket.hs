@@ -22,6 +22,7 @@ udpServerListenSocket ip = E.bracketOnError open close $ \s -> do
     setSocketOption s ReuseAddr 1
     withFdSocket s setCloseOnExecIfNeeded
     -- setSocketOption s IPv6Only 1 -- fixme
+    putStrLn $ "udpServerListenSocket: " ++ show s
     bind s sa
     return (s,sa)
   where
@@ -37,6 +38,7 @@ udpServerConnectedSocket mysa peersa = E.bracketOnError open close $ \s -> do
     -- So, bind may results in EADDRINUSE
     bind s anysa      -- (UDP, *:13443, *:*)
        `E.catch` postphone (bind s anysa)
+    putStrLn $ "udpServerConnectedSocket: " ++ show s
     connect s peersa  -- (UDP, 127.0.0.1:13443, pa:pp)
     return s
   where
@@ -52,6 +54,7 @@ udpClientSocket host port = do
     addr <- head <$> getAddrInfo (Just hints) (Just host) (Just port)
     E.bracketOnError (openSocket addr) close $ \s -> do
         let sa = addrAddress addr
+        putStrLn $ "udpClientSocket: " ++ show (s, sa)
         return (s,sa)
  where
     hints = defaultHints { addrSocketType = Datagram }
@@ -61,6 +64,7 @@ udpClientConnectedSocket host port = do
     addr <- head <$> getAddrInfo (Just hints) (Just host) (Just port)
     E.bracketOnError (openSocket addr) close $ \s -> do
         let sa = addrAddress addr
+        putStrLn $ "udpClientConnectedSocket: " ++ show (s, sa)
         connect s sa
         return (s,sa)
  where

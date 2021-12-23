@@ -109,6 +109,7 @@ createServerConnection conf@ServerConfig{..} dispatch Accept{..} baseThreadId = 
     sref <- newIORef [s0]
     let send buf siz = void $ do
             s:_ <- readIORef sref
+            printBuf "Server is sending: " buf siz
             NS.sendBuf s buf siz
         recv = recvServer accRecvQ
     let Just myCID = initSrcCID accMyAuthCIDs

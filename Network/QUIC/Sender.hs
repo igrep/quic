@@ -42,6 +42,7 @@ sendPacket conn spkts0 = getMaxPacketSize conn >>= go
   where
     SizedBuffer buf0 bufsiz0 = encryptRes conn
     ldcc = connLDCC conn
+    puts = printAsRole conn
     go maxSiz = do
         mx <- atomically ((Just    <$> takePingSTM ldcc)
                  `orElse` (Nothing <$  checkWindowOpenSTM ldcc maxSiz))
@@ -55,7 +56,9 @@ sendPacket conn spkts0 = getMaxPacketSize conn >>= go
             let bytes = bufsiz0 - leftsiz
             when (isServer conn) $ waitAntiAmplificationFree conn bytes
             now <- getTimeMicrosecond
+            puts $ "IN sendPacket BEFORE connSend at " ++ show now
             connSend conn buf0 bytes
+            puts $ "IN sendPacket AFTER connSend at " ++ show now
             addTxBytes conn bytes
             forM_ sentPackets $ \sentPacket0 -> do
                 let sentPacket = sentPacket0 { spTimeSent = now }
@@ -87,6 +90,7 @@ sendPacket conn spkts0 = getMaxPacketSize conn >>= go
 
 sendPingPacket :: Connection -> EncryptionLevel -> IO ()
 sendPingPacket conn lvl = do
+    let puts = printAsRole conn
     maxSiz <- getMaxPacketSize conn
     ok <- if isClient conn then return True
           else checkAntiAmplificationFree conn maxSiz
@@ -111,7 +115,9 @@ sendPingPacket conn lvl = do
             (bytes,padlen) <- encodePlainPacket conn sizbuf ping (Just maxSiz)
             when (bytes >= 0) $ do
                 now <- getTimeMicrosecond
+                puts $ "IN sendPingPacket BEFORE connSend " ++ show frames ++ " at " ++ show now
                 connSend conn buf bytes
+                puts $ "IN sendPingPacket AFTER connSend " ++ show frames ++ " at " ++ show now
                 addTxBytes conn bytes
                 let sentPacket0 = fixSentPacket spkt bytes padlen
                     sentPacket = sentPacket0 { spTimeSent = now }

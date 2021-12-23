@@ -6,6 +6,9 @@ import GHC.Event
 #else
 import Control.Concurrent
 import System.Timeout
+
+import           GHC.Stack
+
 -- In case of Windows
 -- We don't really need a timer manager type
 data TimerManager = TimerConstructor
@@ -19,11 +22,12 @@ data TimeoutKey = TimeKeyConstructor ThreadId (MVar TimeOutMsg)
 getSystemTimerManager :: IO TimerManager
 getSystemTimerManager = pure TimerConstructor
 
-registerTimeout :: TimerManager -> Int -> TimeoutCallback -> IO TimeoutKey
+registerTimeout :: HasCallStack => TimerManager -> Int -> TimeoutCallback -> IO TimeoutKey
 registerTimeout _ n callback = do
     mvar <- newEmptyMVar :: IO (MVar TimeOutMsg)
     TimeKeyConstructor <$> forkIO (
         let action time = do
+                putStrLn $ "registerTimeout " ++ show time ++ " in " ++ show callStack
                 msg <- timeout time (takeMVar mvar)
                 case msg of
                     Nothing -> callback

@@ -44,6 +44,11 @@ isClient conn = getRole conn == Client
 isServer :: Connector a => a -> Bool
 isServer conn = getRole conn == Server
 
+printAsRole :: Connector a => a -> String -> IO ()
+printAsRole c s = putStrLn $ r ++ s
+  where
+    r = if isServer c then "Server: " else "Client: "
+
 ----------------------------------------------------------------
 
 data ConnectionState = Handshaking

@@ -20,6 +20,8 @@ import Network.QUIC.Connector
 import Network.QUIC.Imports
 import Network.QUIC.Types
 
+import           GHC.Stack
+
 data TimeoutException = TimeoutException deriving (Show, Typeable)
 
 instance E.Exception TimeoutException where
@@ -33,7 +35,7 @@ globalTimeoutQ = unsafePerformIO newTQueueIO
 timeouter :: IO ()
 timeouter = forever $ join $ atomically (readTQueue globalTimeoutQ)
 
-timeout :: Microseconds -> IO a -> IO (Maybe a)
+timeout :: HasCallStack => Microseconds -> IO a -> IO (Maybe a)
 timeout (Microseconds ms) action = do
     tid <- myThreadId
     timmgr <- getSystemTimerManager
@@ -41,10 +43,10 @@ timeout (Microseconds ms) action = do
         onTimeout = atomically $ writeTQueue globalTimeoutQ killMe
         setup = registerTimeout timmgr ms onTimeout
         cleanup key = unregisterTimeout timmgr key
-    E.handleSyncOrAsync (\TimeoutException -> return Nothing) $
+    E.handleSyncOrAsync (\TimeoutException -> print TimeoutException >> return Nothing) $
         E.bracket setup cleanup $ \_ -> Just <$> action
 
-fire :: Connection -> Microseconds -> TimeoutCallback -> IO ()
+fire :: HasCallStack => Connection -> Microseconds -> TimeoutCallback -> IO ()
 fire conn (Microseconds microseconds) action = do
     timmgr <- getSystemTimerManager
     void $ registerTimeout timmgr microseconds action'

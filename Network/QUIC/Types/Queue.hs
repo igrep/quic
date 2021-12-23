@@ -13,7 +13,7 @@ readRecvQ :: RecvQ -> IO ReceivedPacket
 readRecvQ (RecvQ q) = atomically $ readTQueue q
 
 writeRecvQ :: RecvQ -> ReceivedPacket -> IO ()
-writeRecvQ (RecvQ q) x = atomically $ writeTQueue q x
+writeRecvQ (RecvQ q) x = (putStrLn $ "writeRecvQ " ++ show (rpEncryptionLevel x)) >> (atomically $ writeTQueue q x)
 
 prependRecvQ :: RecvQ -> ReceivedPacket -> STM ()
 prependRecvQ (RecvQ q) = unGetTQueue q
