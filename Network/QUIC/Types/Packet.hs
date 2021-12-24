@@ -52,7 +52,7 @@ data VersionInfo = VersionInfo {
   } deriving (Eq, Show)
 
 defaultVersionInfo :: VersionInfo
-defaultVersionInfo = VersionInfo Version1 [Version2, Version1]
+defaultVersionInfo = VersionInfo Version1 [Version1]
 
 brokenVersionInfo :: VersionInfo
 brokenVersionInfo = VersionInfo Negotiation []
